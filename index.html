@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Big simple camera</title>
+    <style>
+      #feed {
+        position: fixed;
+        inset: 0;
+        display: none;
+        z-index: 1;
+      }
+      #feed button {
+        position: fixed;
+        z-index: 2;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        width: 200px;
+        height: 50px;
+        border: 0;
+        background-color: #0008;
+        border-bottom-right-radius: 16px;
+        color: white;
+        transition: opacity 200ms;
+        cursor: pointer;
+      }
+      #feed button:hover {
+        opacity: 1;
+      }
+      @keyframes fade-out {
+        0% {
+          opacity: 1;
+        }
+        10% {
+          opacity: 0.6;
+        }
+        80% {
+          opacity: 0.6;
+        }
+        100% {
+          opacity: 0;
+        }
+      }
+      #feed button:not(:hover) {
+        animation: fade-out 5s;
+      }
+      #feed video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      #feed {
+        background-color: white;
+      }
+    </style>
+    <script>
+      function showError(err) {
+        document.querySelector("#picker code").textContent = err;
+      }
+      function scan() {
+        if (!navigator.mediaDevices?.enumerateDevices) {
+          showError("Can't find any devices");
+        } else {
+          navigator.mediaDevices
+            .getUserMedia({ video: true })
+            .then(() => {
+              document
+                .querySelectorAll("#picker select option:not(:disabled)")
+                .forEach((e) => e.remove());
+              navigator.mediaDevices
+                .enumerateDevices()
+                .then((devices) => {
+                  const container = document.querySelector("#picker select");
+                  devices
+                    .filter((device) => device.kind === "videoinput")
+                    .forEach((device) => {
+                      const e = document.createElement("option");
+                      e.value = device.deviceId;
+                      e.textContent = `${device.kind}: ${device.label}`;
+                      container.appendChild(e);
+                    });
+                  document.querySelector("#selection-widget").style.display =
+                    "";
+                })
+                .catch((err) => {
+                  showError(`${err.name}: ${err.message}`);
+                });
+            })
+            .catch((err) => {
+              showError(
+                `You must allow permission. (${err.name}: ${err.message})`
+              );
+            });
+        }
+      }
+      function go() {
+        const value = /** @type {HTMLSelectElement} */ (
+          document.querySelector("#picker select")
+        ).value;
+        if (value === "_unselected") {
+          showError("Please select a camera.");
+        } else {
+          navigator.mediaDevices
+            .getUserMedia({
+              video: {
+                deviceId: {
+                  exact: value,
+                },
+              },
+            })
+            .then((stream) => {
+              const video = document.querySelector("#feed video");
+              video.srcObject = stream;
+              video.onloadedmetadata = () => {
+                document.querySelector("#feed").style.display = "block";
+                video.play();
+              };
+            })
+            .catch((err) => {
+              showError(`${err.name}: ${err.message}`);
+            });
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="picker">
+      <h1>Big simple camera</h1>
+      <h2>Input select</h2>
+      <p>
+        <span style="display: none" id="selection-widget">
+          <select>
+            <option value="_unselected">Pick a camera...</option>
+          </select>
+          <button onclick="go()">Show camera</button>
+        </span>
+        <code></code>
+      </p>
+      <p><button onclick="scan()">Scan</button></p>
+    </div>
+    <div id="feed">
+      <button onclick='document.querySelector("#feed").style.display = "none";'>
+        Back to picker
+      </button>
+      <video></video>
+    </div>
+  </body>
+</html>
