@@ -46,10 +46,8 @@
         animation: fade-out 5s;
       }
       #feed video {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
+        position: fixed;
+        object-fit: fill;
       }
       #feed {
         background-color: white;
@@ -67,12 +65,16 @@
             .getUserMedia({ video: true })
             .then(() => {
               document
-                .querySelectorAll("#picker select option:not(:disabled)")
+                .querySelectorAll(
+                  "#picker #source-select option:not(:disabled)"
+                )
                 .forEach((e) => e.remove());
               navigator.mediaDevices
                 .enumerateDevices()
                 .then((devices) => {
-                  const container = document.querySelector("#picker select");
+                  const container = document.querySelector(
+                    "#picker #source-select"
+                  );
                   devices
                     .filter((device) => device.kind === "videoinput")
                     .forEach((device) => {
@@ -95,18 +97,46 @@
             });
         }
       }
-      function go() {
-        const value = /** @type {HTMLSelectElement} */ (
-          document.querySelector("#picker select")
+      function calculateVideoAspectRatio(ratio) {
+        console.log(ratio);
+        /** @type {HTMLVideoElement} */
+        const video = document.querySelector("#feed video");
+        const isWidthLarger = window.innerWidth / ratio > window.innerHeight;
+        console.log(isWidthLarger);
+        let videoWidth, videoHeight;
+        if (isWidthLarger) {
+          videoHeight = window.innerHeight;
+          videoWidth = window.innerHeight * ratio;
+        } else {
+          videoWidth = window.innerWidth;
+          videoHeight = window.innerWidth / ratio;
+        }
+        video.style.width = `${videoWidth}px`;
+        video.style.height = `${videoHeight}px`;
+        video.style.top = `${(window.innerHeight - videoHeight) / 2}px`;
+        video.style.left = `${(window.innerWidth - videoWidth) / 2}px`;
+      }
+      window.addEventListener("resize", () => {
+        const aspectValue = /** @type {HTMLSelectElement} */ (
+          document.querySelector("#picker #aspect-select")
         ).value;
-        if (value === "_unselected") {
+        calculateVideoAspectRatio(parseFloat(aspectValue));
+      });
+      function go() {
+        const sourceValue = /** @type {HTMLSelectElement} */ (
+          document.querySelector("#picker #source-select")
+        ).value;
+        const aspectValue = /** @type {HTMLSelectElement} */ (
+          document.querySelector("#picker #aspect-select")
+        ).value;
+        if (sourceValue === "_unselected") {
           showError("Please select a camera.");
         } else {
           navigator.mediaDevices
             .getUserMedia({
               video: {
                 deviceId: {
-                  exact: value,
+                  exact: sourceValue,
                 },
               },
             })
@@ -115,6 +145,8 @@
               video.srcObject = stream;
               video.onloadedmetadata = () => {
                 document.querySelector("#feed").style.display = "block";
+                document.querySelector("#feed").requestFullscreen();
+                calculateVideoAspectRatio(parseFloat(aspectValue));
                 video.play();
               };
             })
@@ -129,19 +161,36 @@
     <div id="picker">
       <h1>Big simple camera</h1>
       <h2>Input select</h2>
+      <div id="selection-widget" style="display: none">
+        <p>
+          <label
+            >Input source:
+            <select id="source-select">
+              <option value="_unselected">Pick a camera...</option>
+            </select>
+          </label>
+        </p>
+        <p>
+          <label
+            >Input aspect ratio:
+            <select id="aspect-select">
+              <option value="1.33">4:3</option>
+              <option value="1.50">3:2</option>
+              <option value="1.78">16:9</option>
+            </select>
+          </label>
+        </p>
+        <p><button onclick="go()">Show camera</button></p>
+      </div>
       <p>
-        <span style="display: none" id="selection-widget">
-          <select>
-            <option value="_unselected">Pick a camera...</option>
-          </select>
-          <button onclick="go()">Show camera</button>
-        </span>
         <code></code>
       </p>
       <p><button onclick="scan()">Scan</button></p>
     </div>
     <div id="feed">
-      <button onclick='document.querySelector("#feed").style.display = "none";'>
+      <button
+        onclick='document.querySelector("#feed").style.display = "none";document.exitFullscreen()'
+      >
         Back to picker
       </button>
       <video></video>
