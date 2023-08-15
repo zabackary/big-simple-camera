@@ -113,8 +113,12 @@
         }
         video.style.width = `${videoWidth}px`;
         video.style.height = `${videoHeight}px`;
-        video.style.top = `${(window.innerHeight - videoHeight) / 2}px`;
-        video.style.left = `${(window.innerWidth - videoWidth) / 2}px`;
+        video.style.top = `${Math.floor(
+          (window.innerHeight - videoHeight) / 2
+        )}px`;
+        video.style.left = `${Math.floor(
+          (window.innerWidth - videoWidth) / 2
+        )}px`;
       }
       window.addEventListener("resize", () => {
         const aspectValue = /** @type {HTMLSelectElement} */ (
@@ -176,9 +180,9 @@
           <label
             >Input aspect ratio:
             <select id="aspect-select">
-              <option value="1.33">4:3</option>
-              <option value="1.50">3:2</option>
-              <option value="1.78">16:9</option>
+              <option value="1.33333333">4:3</option>
+              <option value="1.50000000">3:2</option>
+              <option value="1.77777778">16:9</option>
             </select>
           </label>
         </p>
