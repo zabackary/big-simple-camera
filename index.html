@@ -63,7 +63,10 @@
         } else {
           navigator.mediaDevices
             .getUserMedia({ video: true })
-            .then(() => {
+            .then((dummyStream) => {
+              dummyStream.getTracks().forEach((track) => {
+                track.stop();
+              });
               document
                 .querySelectorAll(
                   "#picker #source-select option:not(:disabled)"
@@ -98,7 +101,6 @@
         }
       }
       function calculateVideoAspectRatio(ratio) {
-        console.log(ratio);
         /** @type {HTMLVideoElement} */
         const video = document.querySelector("#feed video");
         const isWidthLarger = window.innerWidth / ratio > window.innerHeight;
@@ -161,6 +163,13 @@
             });
         }
       }
+      function stop() {
+        document.querySelector("#feed").style.display = "none";
+        document.exitFullscreen();
+        /** @type {HTMLVideoElement} */
+        const video = document.querySelector("#feed video");
+        video.srcObject?.getTracks()?.forEach((track) => track.stop());
+      }
     </script>
   </head>
   <body>
@@ -194,11 +203,7 @@
       <p><button onclick="scan()">Scan</button></p>
     </div>
     <div id="feed">
-      <button
-        onclick='document.querySelector("#feed").style.display = "none";document.exitFullscreen()'
-      >
-        Back to picker
-      </button>
+      <button onclick="stop()">Back to picker</button>
       <video></video>
     </div>
   </body>
