@@ -9,6 +9,7 @@
         inset: 0;
         display: none;
         z-index: 1;
+        cursor: none;
       }
       #feed button {
         position: fixed;
@@ -83,7 +84,7 @@
                     .forEach((device) => {
                       const e = document.createElement("option");
                       e.value = device.deviceId;
-                      e.textContent = `${device.kind}: ${device.label}`;
+                      e.textContent = device.label;
                       container.appendChild(e);
                     });
                   document.querySelector("#selection-widget").style.display =
